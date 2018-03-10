@@ -12,7 +12,7 @@ echo($config->get('address_book.admin.email'));
 echo($config['address_book.admin.email']);
 ```
 
-# Example 1 (with an Array)
+# Example 2 (with an Array)
 
 ```php
 $config = new Config([
