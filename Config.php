@@ -1,30 +1,33 @@
 <?php
+declare(strict_types = 1);
 
-class Config implements \ArrayAccess, \Iterator
+namespace Chiron\Config;
+
+class Config implements \ArrayAccess, \Iterator, \Countable
 {
-    /** @var array Array of configuration options */
-    protected $config = [];
+    /**
+     * Data within the configuration.
+     *
+     * @var array
+     */
+    protected $data = [];
+    /**
+     * Used when unsetting values during iteration to ensure we do not skip
+     * the next element.
+     *
+     * @var bool
+     */
+    protected $skipNextIteration;
+
     /**
      * Class constructor, runs on object creation.
      *
-     * @param mixed $context Raw array of configuration options or path to a
-     *                       configuration file or directory
+     * @param array $data Raw array of configuration options
      */
     public function __construct(array $data)
     {
-        $this->config = $data;
-            
+        $this->data = $data;
     }
-    /**
-     * Get all of the configuration items
-     *
-     * @return array
-     */
-    public function all()
-    {
-        return $this->config;
-    }
-
     /**
      * Retrieve a configuration option via a provided key.
      *
@@ -35,19 +38,18 @@ class Config implements \ArrayAccess, \Iterator
      */
     public function get(string $key, $default = null)
     {
-        $config = $this->config;
+        $data = $this->data;
         $keys = explode('.', $key);
 
         foreach ($keys as $k) {
-            if (! isset($config[$k])) {
-            //if (!is_array($config) || !array_key_exists($k, $config)) {
+            if (! isset($data[$k])) {
+                //if (!is_array($data) || !array_key_exists($k, $data)) {
                 return $default;
             }
-            $config = $config[$k];
+            $data = $data[$k];
         }
-        return $config;
+        return $data;
     }
-
     /**
      * Store a config value with a specified key.
      *
@@ -58,15 +60,16 @@ class Config implements \ArrayAccess, \Iterator
      */
     public function set(string $key, $value)
     {
-        $config = &$this->config;
+        $data = &$this->data;
         $keys = explode('.', $key);
 
         foreach ($keys as $k) {
-            $config = &$config[$k];
+            $data = &$data[$k];
         }
-        $config = $value;
-    }
+        $data = $value;
 
+        return $this;
+    }
     /**
      * Check for the existance of a config item.
      *
@@ -76,25 +79,61 @@ class Config implements \ArrayAccess, \Iterator
      */
     public function has(string $key): bool
     {
-        $config = $this->config;
+        $data = $this->data;
         $keys = explode('.', $key);
 
         foreach ($keys as $k) {
-            if (! isset($config[$k])) {
-//           	if (!is_array($config) || !array_key_exists($k, $config)) {
+            if (! isset($data[$k])) {
                 return false;
             }
-            $config = $config[$k];
+            $data = $data[$k];
         }
         return true;
-
-        //return $this->get($key) !== null;
+    }
+    /**
+     * Remove a value using the offset as a key
+     *
+     * @param  string $key
+     *
+     * @return object This Config object
+     */
+    public function remove($key)
+    {
+        // @TODO : faire en sorte de pouvoir supprimer des clés du type ->remove('php.settings.abc') au lieu de mettre cela à null pour l'instant. Il faudra aussi gérer le risque de désynchro si on fait un unset ou un remove pendant une boucle.
+        $this->set($key, null);
+        return $this;
+    }
+    /**
+     * Load configuration options from an array.
+     *
+     * @param array $data Raw array of configuration options
+     * @param bool $override Whether or not to override existing options with
+     *                         values from the loaded array data
+     *
+     * @return object This Config object
+     */
+    public function merge(array $data, bool $override = true)
+    {
+        if ($override) {
+            $this->data = array_merge($this->data, $data);
+        } else {
+            $this->data = array_merge($data, $this->data);
+        }
+        return $this;
+    }
+    /**
+     * Get all of the configuration items
+     *
+     * @return array
+     */
+    public function all()
+    {
+        return $this->data;
     }
 
-    /**
+    /*******************************************************************************
      * ArrayAccess Methods
-     */
-
+     ******************************************************************************/
     /**
      * Determine whether an item exists at a specific offset.
      *
@@ -104,8 +143,8 @@ class Config implements \ArrayAccess, \Iterator
      */
     public function offsetExists($offset)
     {
-        //return isset($this->config[$offset]);
-        return $this->has($offset);
+        //return $this->has($offset);
+        return $this->__isset($offset);
     }
     /**
      * Retrieve an item at a specific offset.
@@ -116,8 +155,8 @@ class Config implements \ArrayAccess, \Iterator
      */
     public function offsetGet($offset)
     {
-        //return $this->config[$offset];
-        return $this->get($offset);
+        //return $this->get($offset);
+        return $this->__get($offset);
     }
     /**
      * Assign a value to the specified item at a specific offset.
@@ -127,8 +166,8 @@ class Config implements \ArrayAccess, \Iterator
      */
     public function offsetSet($offset, $value)
     {
-        //$this->config[$offset] = $value;
-        $this->set($offset, $value);
+        //$this->set($offset, $value);
+        $this->__set($offset, $value);
     }
     /**
      * Unset an item at a specific offset.
@@ -137,14 +176,96 @@ class Config implements \ArrayAccess, \Iterator
      */
     public function offsetUnset($offset)
     {
-        //unset($this->config[$offset]);
-        $this->set($offset, null);
+        //$this->remove($offset);
+        $this->__unset($offset);
     }
 
-
+    /*******************************************************************************
+     * Magic Methods
+     ******************************************************************************/
     /**
-     * Iterator Methods
+     * Magic function so that $obj->value will work.
+     *
+     * @param  string $name
+     * @return mixed
      */
+    public function __get($name)
+    {
+        return $this->get($name);
+    }
+    /**
+     * Set a value in the config.
+     *
+     * @param  string $name
+     * @param  mixed  $value
+     * @return void
+     * @throws Exception\RuntimeException
+     */
+    public function __set($name, $value)
+    {
+        $this->set($name, $value);
+
+        // @TODO : utiliser le code ci dessous pour gérer le cas ou $config = [] cad quand le $name n'est pas utilisé.
+        // @TODO : gerer le cas ou on a une chaine avec des points, il faut créer un tableau ou non ???? genre $config->php = 'date.timezone' ou 'test123'
+        /*
+        if (is_array($value)) {
+            $value = new static($value, true);
+        }
+        if (null === $name) {
+            $this->data[] = $value;
+        } else {
+            $this->data[$name] = $value;
+        }*/
+    }
+    /**
+     * isset() overloading
+     *
+     * @param  string $name
+     * @return bool
+     */
+    public function __isset($name)
+    {
+        return $this->has($name);
+
+        //return isset($this->data[$name]);
+    }
+    /**
+     * unset() overloading
+     *
+     * @param  string $name
+     * @return void
+     * @throws Exception\InvalidArgumentException
+     */
+    public function __unset($name)
+    {
+        $this->remove($name);
+        /*
+        if (isset($this->data[$name])) {
+            unset($this->data[$name]);
+            $this->skipNextIteration = true;
+        }*/
+    }
+    /**
+     * Deep clone of this instance to ensure that nested Chiron\Configs are also cloned.
+     *
+     * @return void
+     */
+    public function __clone()
+    {
+        $array = [];
+        foreach ($this->data as $key => $value) {
+            if ($value instanceof self) {
+                $array[$key] = clone $value;
+            } else {
+                $array[$key] = $value;
+            }
+        }
+        $this->data = $array;
+    }
+
+    /*******************************************************************************
+     * Iterator Methods
+     ******************************************************************************/
     /**
      * Returns the config array element referenced by its internal cursor
      *
@@ -155,7 +276,8 @@ class Config implements \ArrayAccess, \Iterator
      */
     public function current()
     {
-        return (is_array($this->config) ? current($this->config) : null);
+        $this->skipNextIteration = false;
+        return current($this->data);
     }
     /**
      * Returns the config array index referenced by its internal cursor
@@ -166,7 +288,7 @@ class Config implements \ArrayAccess, \Iterator
      */
     public function key()
     {
-        return (is_array($this->config) ? key($this->config) : null);
+        return key($this->data);
     }
     /**
      * Moves the config array's internal cursor forward one element
@@ -178,7 +300,12 @@ class Config implements \ArrayAccess, \Iterator
      */
     public function next()
     {
-        return (is_array($this->config) ? next($this->config) : null);
+        if ($this->skipNextIteration) {
+            $this->skipNextIteration = false;
+            return;
+        }
+
+        return next($this->data);
     }
     /**
      * Moves the config array's internal cursor to the first element
@@ -190,7 +317,8 @@ class Config implements \ArrayAccess, \Iterator
      */
     public function rewind()
     {
-        return (is_array($this->config) ? reset($this->config) : null);
+        $this->skipNextIteration = false;
+        return reset($this->data);
     }
     /**
      * Tests whether the iterator's current index is valid
@@ -199,18 +327,20 @@ class Config implements \ArrayAccess, \Iterator
      */
     public function valid()
     {
-        return (is_array($this->config) ? key($this->config) !== null : false);
-    }
-    /**
-     * Remove a value using the offset as a key
-     *
-     * @param  string $key
-     *
-     * @return void
-     */
-    public function remove($key)
-    {
-        $this->offsetUnset($key);
+        return key($this->data) !== null;
     }
 
+    /*******************************************************************************
+     * Count Methods
+     ******************************************************************************/
+    /**
+     * count(): defined by Countable interface.
+     *
+     * @see    Countable::count()
+     * @return int
+     */
+    public function count()
+    {
+        return count($this->data);
+    }
 }
