@@ -15,6 +15,7 @@ class JsonLoader implements LoaderInterface
     {
         $this->pattern = $pattern;
     }
+
     /**
      * {@inheritdoc}
      */
@@ -22,6 +23,7 @@ class JsonLoader implements LoaderInterface
     {
         return file_exists($path) && preg_match($this->pattern, pathinfo($path)['basename']);
     }
+
     /**
      * {@inheritdoc}
      */

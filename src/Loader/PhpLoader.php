@@ -23,6 +23,7 @@ class PhpLoader implements LoaderInterface
     {
         return file_exists($path) && preg_match($this->pattern, pathinfo($path)['basename']);
     }
+
     /**
      * {@inheritdoc}
      */
@@ -30,6 +31,7 @@ class PhpLoader implements LoaderInterface
     {
         $level = ob_get_level();
         ob_start();
+
         try {
             $config = require $path;
             ob_end_flush();
@@ -37,8 +39,11 @@ class PhpLoader implements LoaderInterface
                 return $config;
             }
         } catch (Throwable $e) {
-            while (ob_get_level() - $level > 0) ob_end_flush();
+            while (ob_get_level() - $level > 0) {
+                ob_end_flush();
+            }
         }
+
         return [];
     }
 }

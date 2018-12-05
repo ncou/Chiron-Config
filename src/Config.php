@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Chiron\Config;
 
+use Chiron\Config\Loader\LoaderInterface;
 use InvalidArgumentException;
 use LogicException;
-use Chiron\Config\Loader\LoaderInterface;
 
 //https://github.com/Wandu/Framework/blob/master/src/Wandu/Config/Config.php
 
@@ -17,6 +17,7 @@ class Config implements ConfigInterface
 
     /** @var LoaderInterface[] */
     protected $loaders = [];
+
     /**
      * @param array $items
      */
@@ -24,6 +25,7 @@ class Config implements ConfigInterface
     {
         $this->items = $items;
     }
+
     /**
      * @param LoaderInterface $loader
      */
@@ -31,6 +33,7 @@ class Config implements ConfigInterface
     {
         $this->loaders[] = $loader;
     }
+
     /**
      * {@inheritdoc}
      */
@@ -39,11 +42,14 @@ class Config implements ConfigInterface
         foreach ($this->loaders as $loader) {
             if ($loader->canLoad($path)) {
                 $this->merge($loader->load($path));
+
                 return;
             }
         }
+
         throw new InvalidArgumentException(sprintf('Cannot load "%s"', $path));
     }
+
     /**
      * @param array $appender
      */
@@ -51,9 +57,11 @@ class Config implements ConfigInterface
     {
         $this->items = $this->recursiveMerge($this->items, $appender);
     }
+
     /**
      * @param mixed $origin
      * @param mixed $appender
+     *
      * @return mixed
      */
     private function recursiveMerge($origin, $appender)
@@ -69,10 +77,13 @@ class Config implements ConfigInterface
                     $origin[$key] = $value;
                 }
             }
+
             return $origin;
         }
+
         return $appender;
     }
+
     /**
      * {@inheritdoc}
      */
@@ -80,6 +91,7 @@ class Config implements ConfigInterface
     {
         return $this->items;
     }
+
     /**
      * {@inheritdoc}
      */
@@ -93,13 +105,15 @@ class Config implements ConfigInterface
         $dataToReturn = $this->items;
         while (count($names)) {
             $name = array_shift($names);
-            if (!is_array($dataToReturn) || !array_key_exists($name, $dataToReturn)) {
+            if (! is_array($dataToReturn) || ! array_key_exists($name, $dataToReturn)) {
                 return false;
             }
             $dataToReturn = $dataToReturn[$name];
         }
+
         return true;
     }
+
     /**
      * {@inheritdoc}
      */
@@ -113,13 +127,15 @@ class Config implements ConfigInterface
         $dataToReturn = $this->items;
         while (count($names)) {
             $name = array_shift($names);
-            if (!is_array($dataToReturn) || !array_key_exists($name, $dataToReturn)) {
+            if (! is_array($dataToReturn) || ! array_key_exists($name, $dataToReturn)) {
                 return $default;
             }
             $dataToReturn = $dataToReturn[$name];
         }
+
         return $dataToReturn;
     }
+
     /**
      * {@inheritdoc}
      */
@@ -127,14 +143,16 @@ class Config implements ConfigInterface
     {
         $subset = $this->get($name);
 
-        if (!is_array($subset)) {
+        if (! is_array($subset)) {
             throw new InvalidArgumentException('Subset must be an array.');
         }
 
         return new static($subset);
     }
+
     /**
      * @param string $name
+     *
      * @return ConfigInterface|mixed
      */
     public function __get($name)
@@ -143,6 +161,7 @@ class Config implements ConfigInterface
 
         return is_array($subset) ? new static($subset) : $subset;
     }
+
     /**
      * {@inheritdoc}
      */
@@ -150,6 +169,7 @@ class Config implements ConfigInterface
     {
         return $this->has($offset);
     }
+
     /**
      * {@inheritdoc}
      */
@@ -157,6 +177,7 @@ class Config implements ConfigInterface
     {
         return $this->get($offset);
     }
+
     /**
      * {@inheritdoc}
      */
@@ -164,6 +185,7 @@ class Config implements ConfigInterface
     {
         throw new LogicException(sprintf('Cannot call "%s" in "%s"', __FUNCTION__, __CLASS__));
     }
+
     /**
      * {@inheritdoc}
      */

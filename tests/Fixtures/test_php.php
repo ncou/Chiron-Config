@@ -1,6 +1,7 @@
 <?php
+
 return [
-    'foo' => 'foo string',
+    'foo'     => 'foo string',
     'vendor1' => [
         'service1' => [
             'name' => 'vendor1 service1 name..',

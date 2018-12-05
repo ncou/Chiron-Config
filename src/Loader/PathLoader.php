@@ -19,6 +19,7 @@ class PathLoader implements LoaderInterface
         $this->loaders = $loaders;
         $this->pattern = $pattern;
     }
+
     /**
      * {@inheritdoc}
      */
@@ -26,6 +27,7 @@ class PathLoader implements LoaderInterface
     {
         return is_dir($path);
     }
+
     /**
      * {@inheritdoc}
      */
@@ -34,9 +36,11 @@ class PathLoader implements LoaderInterface
         $configToReturn = [];
         foreach (new DirectoryIterator($path) as $file) {
             $filename = $file->getFilename();
-            if ($filename === '.' || $filename === '..') continue;
+            if ($filename === '.' || $filename === '..') {
+                continue;
+            }
             if ($file->isFile()) {
-                $name = $file->getBasename("." . $file->getExtension());
+                $name = $file->getBasename('.' . $file->getExtension());
                 foreach ($this->loaders as $loader) {
                     if ($loader->canLoad($file->getRealPath())) {
                         if ($config = $loader->load($file->getRealPath())) {
@@ -50,6 +54,7 @@ class PathLoader implements LoaderInterface
                 }
             }
         }
+
         return $configToReturn;
     }
 }

@@ -6,7 +6,7 @@ namespace Chiron\Config\Loader;
 
 // https://github.com/ncou/phalcon/blob/master/src/Phalcon/Config/Adapter/Ini.php
 
-class JsonLoader implements LoaderInterface
+class IniLoader implements LoaderInterface
 {
     /** @var string */
     protected $pattern;
@@ -15,6 +15,7 @@ class JsonLoader implements LoaderInterface
     {
         $this->pattern = $pattern;
     }
+
     /**
      * {@inheritdoc}
      */
@@ -22,6 +23,7 @@ class JsonLoader implements LoaderInterface
     {
         return file_exists($path) && preg_match($this->pattern, pathinfo($path)['basename']);
     }
+
     /**
      * {@inheritdoc}
      */
@@ -35,7 +37,7 @@ class JsonLoader implements LoaderInterface
             } else {
                 foreach ($directives as $key => $value) {
                     if (strpos($key, '.') !== false) {
-                        (isset($array[$section]) === false) && $array[$section] = array();
+                        (isset($array[$section]) === false) && $array[$section] = [];
                         $array[$section] = self::_parseKey($array[$section], $key, $value);
                     } else {
                         $array[$section][$key] = $value;
@@ -48,17 +50,19 @@ class JsonLoader implements LoaderInterface
     }
 
     /**
-     * Recursive parse key
+     * Recursive parse key.
      *
      * <code>
      * print_r(self::_parseKey(array(), 'a.b.c', 1));
      * </code>
      *
-     * @param array $config
-     * @param string $key
+     * @param array        $config
+     * @param string       $key
      * @param scalar|array $value
-     * @return array
+     *
      * @throws Exception
+     *
+     * @return array
      */
     private static function _parseKey(array $config, $key, $value)
     {
@@ -66,15 +70,16 @@ class JsonLoader implements LoaderInterface
             list($k, $v) = explode('.', $key, 2);
             if (empty($k) === false && empty($v) === false) {
                 if (isset($config[$k]) === false) {
-                    $config[$k] = array();
+                    $config[$k] = [];
                 }
             } else {
-                throw new \InvalidArgumentException("Invalid key '".$key."'");
+                throw new \InvalidArgumentException("Invalid key '" . $key . "'");
             }
             $config[$k] = self::_parseKey($config[$k], $v, $value);
         } else {
             $config[$key] = $value;
         }
+
         return $config;
     }
 }
