@@ -1,14 +1,14 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Chiron\Tests\Config;
 
-use PHPUnit\Framework\TestCase;
 use Chiron\Config\Config;
-use Chiron\Config\Loader\PathLoader;
-
-use Chiron\Config\Loader\PhpLoader;
 use Chiron\Config\Loader\JsonLoader;
+use Chiron\Config\Loader\PathLoader;
+use Chiron\Config\Loader\PhpLoader;
+use PHPUnit\Framework\TestCase;
 
 class PathLoaderTest extends TestCase
 {
@@ -38,7 +38,7 @@ class PathLoaderTest extends TestCase
                 ],
             ],
             'test_php' => [
-                'foo' => 'foo string',
+                'foo'     => 'foo string',
                 'vendor1' => [
                     'service1' => [
                         'name' => 'vendor1 service1 name..',
@@ -65,7 +65,7 @@ class PathLoaderTest extends TestCase
                     'yml11' => true,
                 ],
                 'yml2' => [
-                    'paths' => ['vendor/*', 'tests/*']
+                    'paths' => ['vendor/*', 'tests/*'],
                 ],
                 'yml3' => [
                     'yml3_1',
@@ -75,7 +75,7 @@ class PathLoaderTest extends TestCase
             'test_path' => [
                 'app' => [
                     'debug' => true,
-                    'env' => 'test',
+                    'env'   => 'test',
                 ],
             ],
         ], $config->toArray());
