@@ -4,19 +4,10 @@ declare(strict_types=1);
 
 namespace Chiron\Config;
 
-use Chiron\Config\Loader\LoaderInterface;
-use InvalidArgumentException;
-use LogicException;
-
-//https://github.com/Wandu/Framework/blob/master/src/Wandu/Config/Config.php
-
 class Config implements ConfigInterface
 {
     /** @var array */
     protected $items;
-
-    /** @var LoaderInterface[] */
-    protected $loaders = [];
 
     /**
      * @param array $items
@@ -24,30 +15,6 @@ class Config implements ConfigInterface
     public function __construct(array $items = [])
     {
         $this->items = $items;
-    }
-
-    /**
-     * @param LoaderInterface $loader
-     */
-    public function pushLoader(LoaderInterface $loader)
-    {
-        $this->loaders[] = $loader;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function load(string $path): void
-    {
-        foreach ($this->loaders as $loader) {
-            if ($loader->canLoad($path)) {
-                $this->merge($loader->load($path));
-
-                return;
-            }
-        }
-
-        throw new InvalidArgumentException(sprintf('Cannot load "%s"', $path));
     }
 
     /**
@@ -144,7 +111,7 @@ class Config implements ConfigInterface
         $subset = $this->get($name);
 
         if (! is_array($subset)) {
-            throw new InvalidArgumentException('Subset must be an array.');
+            throw new \InvalidArgumentException('Subset must be an array.');
         }
 
         return new static($subset);
@@ -183,7 +150,7 @@ class Config implements ConfigInterface
      */
     public function offsetSet($offset, $value)
     {
-        throw new LogicException(sprintf('Cannot call "%s" in "%s"', __FUNCTION__, __CLASS__));
+        throw new \LogicException(sprintf('Cannot call "%s" in "%s"', __FUNCTION__, __CLASS__));
     }
 
     /**
@@ -191,6 +158,6 @@ class Config implements ConfigInterface
      */
     public function offsetUnset($offset)
     {
-        throw new LogicException(sprintf('Cannot call "%s" in "%s"', __FUNCTION__, __CLASS__));
+        throw new \LogicException(sprintf('Cannot call "%s" in "%s"', __FUNCTION__, __CLASS__));
     }
 }

@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Chiron\Tests\Config;
 
 use Chiron\Config\Config;
-use Chiron\Config\Loader\JsonLoader;
-use Chiron\Config\Loader\PhpLoader;
 use InvalidArgumentException;
 use LogicException;
 use PHPUnit\Framework\TestCase;
@@ -276,60 +274,6 @@ class ConfigTest extends TestCase
                     ],
                 ],
                 'object2-1' => 'object2-1..',
-            ],
-        ], $config->toArray());
-    }
-
-    public function testWithLoader()
-    {
-        $config = new Config();
-        $config->pushLoader(new PhpLoader());
-        $config->pushLoader(new JsonLoader());
-        //$config->pushLoader(new EnvLoader());
-        //$config->pushLoader(new YmlLoader());
-        $config->load(__DIR__ . '/Fixtures/test_php.php');
-        $config->load(__DIR__ . '/Fixtures/test_json.json');
-        //$config->load(__DIR__ . '/Fixtures/test_env.env');
-        //$config->load(__DIR__ . '/Fixtures/test_yml.yml');
-
-        static::assertSame([
-            'foo'     => 'foo string',
-            'vendor1' => [
-                'service1' => [
-                    'name' => 'vendor1 service1 name..',
-                    'path' => 'vendor1 service1 path..',
-                ],
-                'service2' => [
-                    'name' => 'vendor1 service2 name..',
-                    'path' => 'vendor1 service2 path..',
-                ],
-            ],
-            'vendor2' => [
-                'service1' => [
-                    'name' => 'vendor2 service1 name..',
-                    'path' => 'vendor2 service1 path..',
-                ],
-                'service2' => [
-                    'name' => 'vendor2 service2 name..',
-                    'path' => 'vendor2 service2 path..',
-                ],
-            ],
-            'json1' => 'json 1 string',
-            'json2' => [
-                'json2-1',
-                'json2-2',
-            ],
-            'env1' => 'what the',
-            'env2' => false,
-            'yml1' => [
-                'yml11' => true,
-            ],
-            'yml2' => [
-                'paths' => ['vendor/*', 'tests/*'],
-            ],
-            'yml3' => [
-                'yml3_1',
-                'yml3_2',
             ],
         ], $config->toArray());
     }

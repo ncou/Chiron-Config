@@ -4,15 +4,8 @@ declare(strict_types=1);
 
 namespace Chiron\Config;
 
-use ArrayAccess;
-
-interface ConfigInterface extends ArrayAccess
+interface ConfigInterface extends \ArrayAccess
 {
-    /**
-     * @param string $path
-     */
-    public function load(string $path): void;
-
     /**
      * @return array
      */

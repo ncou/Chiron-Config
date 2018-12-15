@@ -38,7 +38,7 @@ class IniLoader implements LoaderInterface
                 foreach ($directives as $key => $value) {
                     if (strpos($key, '.') !== false) {
                         (isset($array[$section]) === false) && $array[$section] = [];
-                        $array[$section] = self::_parseKey($array[$section], $key, $value);
+                        $array[$section] = self::parseKey($array[$section], $key, $value);
                     } else {
                         $array[$section][$key] = $value;
                     }
@@ -53,7 +53,7 @@ class IniLoader implements LoaderInterface
      * Recursive parse key.
      *
      * <code>
-     * print_r(self::_parseKey(array(), 'a.b.c', 1));
+     * print_r(self::parseKey(array(), 'a.b.c', 1));
      * </code>
      *
      * @param array        $config
@@ -64,7 +64,7 @@ class IniLoader implements LoaderInterface
      *
      * @return array
      */
-    private static function _parseKey(array $config, $key, $value)
+    private static function parseKey(array $config, $key, $value)
     {
         if (strpos($key, '.') !== false) {
             list($k, $v) = explode('.', $key, 2);
@@ -75,7 +75,7 @@ class IniLoader implements LoaderInterface
             } else {
                 throw new \InvalidArgumentException("Invalid key '" . $key . "'");
             }
-            $config[$k] = self::_parseKey($config[$k], $v, $value);
+            $config[$k] = self::parseKey($config[$k], $v, $value);
         } else {
             $config[$key] = $value;
         }
