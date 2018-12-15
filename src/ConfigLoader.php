@@ -30,9 +30,6 @@ class ConfigLoader
         $this->loaders[] = $loader;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function load(string $path): void
     {
         foreach ($this->loaders as $loader) {
@@ -46,9 +43,6 @@ class ConfigLoader
         throw new \InvalidArgumentException(sprintf('Cannot load "%s"', $path));
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getConfig(): ConfigInterface
     {
         return $this->config;

@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace Chiron\Tests\Config;
 
 use Chiron\Config\ConfigLoader;
-use Chiron\Config\Loader\PathLoader;
 use Chiron\Config\Loader\IniLoader;
 use Chiron\Config\Loader\JsonLoader;
+use Chiron\Config\Loader\PathLoader;
 use Chiron\Config\Loader\PhpLoader;
 use Chiron\Config\Loader\YmlLoader;
-use InvalidArgumentException;
-use LogicException;
 use PHPUnit\Framework\TestCase;
 
 class ConfigLoaderTest extends TestCase
@@ -79,7 +77,7 @@ class ConfigLoaderTest extends TestCase
             new IniLoader(),
             new JsonLoader(),
             new PhpLoader(),
-            new YmlLoader()
+            new YmlLoader(),
         ]));
 
         $config->load(__DIR__ . '/Fixtures');
