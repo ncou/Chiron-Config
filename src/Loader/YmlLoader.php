@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Chiron\Config\Loader;
 
 use Symfony\Component\Yaml\Yaml as YamlParser;
-use Throwable;
 
 class YmlLoader implements LoaderInterface
 {
