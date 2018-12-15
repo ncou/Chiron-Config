@@ -8,7 +8,7 @@ use DirectoryIterator;
 
 class PathLoader implements LoaderInterface
 {
-    /** @var \Wandu\Config\Contracts\Loader[] */
+    /** @var LoaderInterface[] */
     protected $loaders;
 
     /** @var string */

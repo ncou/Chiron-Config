@@ -7,18 +7,6 @@ namespace Chiron\Config;
 interface ConfigInterface extends \ArrayAccess
 {
     /**
-     * @return array
-     */
-    public function toArray(): array;
-
-    /**
-     * @param string $name
-     *
-     * @return ConfigInterface
-     */
-    public function subset(string $name): ConfigInterface;
-
-    /**
      * @param string $name
      *
      * @return bool
@@ -32,6 +20,23 @@ interface ConfigInterface extends \ArrayAccess
      * @return mixed
      */
     public function get(string $name, $default = null);
+
+    /**
+     * @param string $name
+     *
+     * @return ConfigInterface
+     */
+    public function subset(string $name): ConfigInterface;
+
+    /**
+     * @param array $appender
+     */
+    public function merge(array $appender): void;
+
+    /**
+     * @return array
+     */
+    public function toArray(): array;
 
     /**
      * @param string $name

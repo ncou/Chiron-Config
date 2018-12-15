@@ -30,6 +30,7 @@ class IniLoader implements LoaderInterface
     public function load(string $path)
     {
         $content = parse_ini_file($path, true);
+        $array = null;
 
         foreach ($content as $section => $directives) {
             if (is_array($directives) === false || empty($directives) === true) {

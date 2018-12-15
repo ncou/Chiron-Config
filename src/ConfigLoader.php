@@ -15,7 +15,7 @@ class ConfigLoader
     protected $loaders = [];
 
     /**
-     * @param array $items
+     * @param ConfigInterface $config
      */
     public function __construct(ConfigInterface $config = null)
     {

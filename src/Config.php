@@ -18,48 +18,6 @@ class Config implements ConfigInterface
     }
 
     /**
-     * @param array $appender
-     */
-    public function merge(array $appender): void
-    {
-        $this->items = $this->recursiveMerge($this->items, $appender);
-    }
-
-    /**
-     * @param mixed $origin
-     * @param mixed $appender
-     *
-     * @return mixed
-     */
-    private function recursiveMerge($origin, $appender)
-    {
-        if (is_array($origin)
-            && array_values($origin) !== $origin
-            && is_array($appender)
-            && array_values($appender) !== $appender) {
-            foreach ($appender as $key => $value) {
-                if (isset($origin[$key])) {
-                    $origin[$key] = $this->recursiveMerge($origin[$key], $value);
-                } else {
-                    $origin[$key] = $value;
-                }
-            }
-
-            return $origin;
-        }
-
-        return $appender;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function toArray(): array
-    {
-        return $this->items;
-    }
-
-    /**
      * {@inheritdoc}
      */
     // TODO : améliorer la fonction "has()" et "get()" avec l'utilisation d'un cache (à vider dans la fonction merge) !!!! => https://github.com/hassankhan/config/blob/master/src/AbstractConfig.php#L114
@@ -115,6 +73,48 @@ class Config implements ConfigInterface
         }
 
         return new static($subset);
+    }
+
+    /**
+     * @param array $appender
+     */
+    public function merge(array $appender): void
+    {
+        $this->items = $this->recursiveMerge($this->items, $appender);
+    }
+
+    /**
+     * @param mixed $origin
+     * @param mixed $appender
+     *
+     * @return mixed
+     */
+    private function recursiveMerge($origin, $appender)
+    {
+        if (is_array($origin)
+            && array_values($origin) !== $origin
+            && is_array($appender)
+            && array_values($appender) !== $appender) {
+            foreach ($appender as $key => $value) {
+                if (isset($origin[$key])) {
+                    $origin[$key] = $this->recursiveMerge($origin[$key], $value);
+                } else {
+                    $origin[$key] = $value;
+                }
+            }
+
+            return $origin;
+        }
+
+        return $appender;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function toArray(): array
+    {
+        return $this->items;
     }
 
     /**
