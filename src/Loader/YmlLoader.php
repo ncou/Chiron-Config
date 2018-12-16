@@ -11,7 +11,7 @@ class YmlLoader implements LoaderInterface
     /** @var string */
     protected $pattern;
 
-    public function __construct(string $pattern = '~^[a-z_][a-z0-9_]*\.yml$~')
+    public function __construct(string $pattern = '~^[a-z_][a-z0-9_]*\.(yml|yaml)$~')
     {
         $this->pattern = $pattern;
     }
