@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Chiron\Config\Loader;
 
 // TODO : améliorer le code en regardant ici => https://github.com/ncou/phalcon/blob/master/src/Phalcon/Config/Adapter/Json.php
+// TODO : lever une exception si le json decode ne marche pas !!!! https://github.com/spiral/config/blob/master/src/Loader/JsonLoader.php
 
 class JsonLoader implements LoaderInterface
 {
