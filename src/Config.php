@@ -89,6 +89,7 @@ class Config implements ConfigInterface
      *
      * @return mixed
      */
+    // TODO : on dirait que les deux paramétres sont des tableaux. et que la valeur de retour sera aussi un tableau. modifier le typehint
     private function recursiveMerge($origin, $appender)
     {
         if (is_array($origin)
