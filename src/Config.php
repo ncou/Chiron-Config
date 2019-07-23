@@ -78,6 +78,8 @@ class Config implements ConfigInterface
     /**
      * @param array $appender
      */
+    //https://github.com/yiisoft/yii2-framework/blob/ecae73e23abb524bb637c37c62e4db5495f5f4f2/helpers/BaseArrayHelper.php#L117
+    //https://github.com/hiqdev/composer-config-plugin/blob/master/src/Helper.php#L29
     public function merge(array $appender): void
     {
         $this->items = $this->recursiveMerge($this->items, $appender);
