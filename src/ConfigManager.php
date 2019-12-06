@@ -224,6 +224,7 @@ class ConfigManager
      */
     public function merge(array $appender): void
     {
+        //$this->data = array_replace_recursive($this->data, $appender);
         $this->data = $this->recursiveMerge($this->data, $appender);
     }
 
@@ -233,7 +234,6 @@ class ConfigManager
      *
      * @return mixed
      */
-    // TODO : on dirait que les deux paramétres sont des tableaux. et que la valeur de retour sera aussi un tableau. modifier le typehint
     private function recursiveMerge($origin, $appender)
     {
         if (is_array($origin)

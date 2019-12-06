@@ -34,23 +34,25 @@ class PathLoader implements LoaderInterface
     public function load(string $path)
     {
         $configToReturn = [];
-        foreach (new DirectoryIterator($path) as $file) {
-            $filename = $file->getFilename();
-            if ($filename === '.' || $filename === '..') {
+        $dir = new DirectoryIterator($path);
+
+        foreach ($dir as $fileInfo) {
+            if ($fileInfo->isDot()) {
                 continue;
             }
-            if ($file->isFile()) {
-                $name = $file->getBasename('.' . $file->getExtension());
+            if ($fileInfo->isFile()) {
+                $name = $fileInfo->getBasename('.' . $fileInfo->getExtension());
                 foreach ($this->loaders as $loader) {
-                    if ($loader->canLoad($file->getRealPath())) {
-                        if ($config = $loader->load($file->getRealPath())) {
+                    if ($loader->canLoad($fileInfo->getRealPath())) {
+                        if ($config = $loader->load($fileInfo->getRealPath())) {
                             $configToReturn[$name] = $config;
                         }
                     }
                 }
             } else {
+                $filename = $fileInfo->getFilename();
                 if (preg_match($this->pattern, $filename)) {
-                    $configToReturn[$filename] = $this->load($file->getRealPath());
+                    $configToReturn[$filename] = $this->load($fileInfo->getRealPath());
                 }
             }
         }
