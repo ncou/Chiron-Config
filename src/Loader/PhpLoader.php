@@ -46,4 +46,11 @@ class PhpLoader implements LoaderInterface
 
         return [];
     }
+
+/*
+    public function getSupportedExtensions()
+    {
+        return ['php'];
+    }
+    */
 }

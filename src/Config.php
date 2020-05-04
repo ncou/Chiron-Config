@@ -4,132 +4,85 @@ declare(strict_types=1);
 
 namespace Chiron\Config;
 
+use Chiron\Config\Exception\ConfigException;
+use ArrayIterator;
+
 class Config implements ConfigInterface
 {
-    /** @var array */
-    protected $items;
+    /**
+     * Stores the configuration data
+     *
+     * @var array
+     */
+    protected $data = [];
 
     /**
-     * @param array $items
+     * Caches the configuration data
+     *
+     * @var array
      */
-    public function __construct(array $items = [])
+    protected $cache = [];
+
+    /**
+     * @param array $data
+     */
+    public function __construct(array $data = [])
     {
-        $this->items = $items;
+        $this->data = $data;
     }
 
     /**
-     * {@inheritdoc}
+     * @param string $key
+     * @param mixed  $default
+     *
+     * @return mixed
      */
-    // TODO : améliorer la fonction "has()" et "get()" avec l'utilisation d'un cache (à vider dans la fonction merge) !!!! => https://github.com/hassankhan/config/blob/master/src/AbstractConfig.php#L114
-    public function has(string $name): bool
+    public function get(string $key, $default = null)
     {
-        if ($name === '') {
+        if ($this->has($key)) {
+            return $this->cache[$key];
+        }
+
+        return $default;
+    }
+
+    /**
+     * @param string $key
+     *
+     * @return bool
+     */
+    public function has(string $key): bool
+    {
+        // Check if already cached
+        if (isset($this->cache[$key])) {
             return true;
         }
-        $names = explode('.', $name);
-        $dataToReturn = $this->items;
-        while (count($names)) {
-            $name = array_shift($names);
-            if (! is_array($dataToReturn) || ! array_key_exists($name, $dataToReturn)) {
+
+        $segments = explode('.', $key);
+        $root = $this->data;
+
+        // nested case
+        foreach ($segments as $segment) {
+            if (array_key_exists($segment, $root)) {
+                $root = $root[$segment];
+                continue;
+            } else {
                 return false;
             }
-            $dataToReturn = $dataToReturn[$name];
         }
+
+        // Set cache for the given key
+        $this->cache[$key] = $root;
 
         return true;
     }
 
     /**
-     * {@inheritdoc}
-     */
-    // TODO : améliorer la fonction "get()" => https://github.com/pinepain/php-simple-config/blob/master/src/Config.php#L49
-    public function get(string $name, $default = null)
-    {
-        if ($name === '') {
-            return $this->items;
-        }
-        $names = explode('.', $name);
-        $dataToReturn = $this->items;
-        while (count($names)) {
-            $name = array_shift($names);
-            if (! is_array($dataToReturn) || ! array_key_exists($name, $dataToReturn)) {
-                return $default;
-            }
-            $dataToReturn = $dataToReturn[$name];
-        }
-
-        return $dataToReturn;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function subset(string $name): ConfigInterface
-    {
-        $subset = $this->get($name);
-
-        if (! is_array($subset)) {
-            throw new \InvalidArgumentException('Subset must be an array.');
-        }
-
-        return new static($subset);
-    }
-
-    /**
-     * @param array $appender
-     */
-    //https://github.com/yiisoft/yii2-framework/blob/ecae73e23abb524bb637c37c62e4db5495f5f4f2/helpers/BaseArrayHelper.php#L117
-    //https://github.com/hiqdev/composer-config-plugin/blob/master/src/Helper.php#L29
-    public function merge(array $appender): void
-    {
-        $this->items = $this->recursiveMerge($this->items, $appender);
-    }
-
-    /**
-     * @param mixed $origin
-     * @param mixed $appender
-     *
-     * @return mixed
-     */
-    // TODO : on dirait que les deux paramétres sont des tableaux. et que la valeur de retour sera aussi un tableau. modifier le typehint
-    private function recursiveMerge($origin, $appender)
-    {
-        if (is_array($origin)
-            && array_values($origin) !== $origin
-            && is_array($appender)
-            && array_values($appender) !== $appender) {
-            foreach ($appender as $key => $value) {
-                if (isset($origin[$key])) {
-                    $origin[$key] = $this->recursiveMerge($origin[$key], $value);
-                } else {
-                    $origin[$key] = $value;
-                }
-            }
-
-            return $origin;
-        }
-
-        return $appender;
-    }
-
-    /**
-     * {@inheritdoc}
+     * @return array
      */
     public function toArray(): array
     {
-        return $this->items;
-    }
-
-    /**
-     * @param string $name
-     *
-     * @return ConfigInterface|mixed
-     */
-    public function __get($name)
-    {
-        $subset = $this->get($name);
-
-        return is_array($subset) ? new static($subset) : $subset;
+        return $this->data;
     }
 
     /**
@@ -153,7 +106,9 @@ class Config implements ConfigInterface
      */
     public function offsetSet($offset, $value)
     {
-        throw new \LogicException(sprintf('Cannot call "%s" in "%s"', __FUNCTION__, __CLASS__));
+        throw new ConfigException(
+            'Unable to change configuration data, configs are treated as immutable by default'
+        );
     }
 
     /**
@@ -161,6 +116,16 @@ class Config implements ConfigInterface
      */
     public function offsetUnset($offset)
     {
-        throw new \LogicException(sprintf('Cannot call "%s" in "%s"', __FUNCTION__, __CLASS__));
+        throw new ConfigException(
+            'Unable to change configuration data, configs are treated as immutable by default'
+        );
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getIterator()
+    {
+        return new ArrayIterator($this->data);
     }
 }

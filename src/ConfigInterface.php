@@ -4,44 +4,25 @@ declare(strict_types=1);
 
 namespace Chiron\Config;
 
-interface ConfigInterface extends \ArrayAccess
+interface ConfigInterface extends \IteratorAggregate, \ArrayAccess
 {
     /**
-     * @param string $name
-     *
-     * @return bool
-     */
-    public function has(string $name): bool;
-
-    /**
-     * @param string $name
+     * @param string $key
      * @param mixed  $default
      *
      * @return mixed
      */
-    public function get(string $name, $default = null);
+    public function get(string $key, $default = null);
 
     /**
-     * @param string $name
+     * @param string $key
      *
-     * @return ConfigInterface
+     * @return bool
      */
-    public function subset(string $name): ConfigInterface;
-
-    /**
-     * @param array $appender
-     */
-    public function merge(array $appender): void;
+    public function has(string $key): bool;
 
     /**
      * @return array
      */
     public function toArray(): array;
-
-    /**
-     * @param string $name
-     *
-     * @return ConfigInterface|mixed
-     */
-    public function __get($name);
 }

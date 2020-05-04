@@ -6,7 +6,8 @@
     "homepage": "https://github.com/ncou/Chiron-Config",
     "license": "MIT",
     "require": {
-        "php": "^7.0"
+        "php": "^7.0",
+        "chiron/filesystem": "^1.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^7.0",

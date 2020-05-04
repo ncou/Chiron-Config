@@ -4,228 +4,183 @@ declare(strict_types=1);
 
 namespace Chiron\Config;
 
+use Chiron\Config\Loader\LoaderInterface;
+use Chiron\Config\Exception\ConfigException;
+use Chiron\Boot\Filesystem;
+use Chiron\Config\Loader\PhpLoader;
+use Chiron\Config\Loader\IniLoader;
+use Chiron\Config\Loader\JsonLoader;
+use Chiron\Config\Loader\YmlLoader;
 use LogicException;
 
-class ConfigManager
+//https://github.com/illuminate/config/blob/master/Repository.php
+//https://github.com/hassankhan/config/blob/master/src/AbstractConfig.php#L114
+//https://github.com/zendframework/zend-config/blob/master/src/Config.php
+
+final class ConfigManager
 {
-    /** @var LoaderInterface */
-    private $loader;
-    /** @var bool */
-    private $strict;
     /** @var array */
-    private $data = [];
-    /** @var array */
-    private $defaults = [];
-    /** @var array */
-    //private $instances = [];
+    // TODO : renommer cette variable en "$sections" et pas data !!!!
+    private $sections = [];
+    /** @var LoaderInterface[] */
+    private $loaders = [];
+    /** @var Filesystem */
+    private $filesystem;
+
+    public function __construct()
+    {
+        $this->loaders[] = new PhpLoader();
+        $this->loaders[] = new IniLoader();
+        $this->loaders[] = new JsonLoader();
+        $this->loaders[] = new YmlLoader();
+
+        $this->filesystem = new Filesystem();
+    }
 
     /**
      * @param LoaderInterface $loader
-     * @param bool            $strict
      */
-    public function __construct()//LoaderInterface $loader, bool $strict = true)
+    public function addLoader(LoaderInterface $loader)
     {
-        //$this->loader = $loader;
-        //$this->strict = $strict;
+        $this->loaders[] = $loader;
+    }
 
-        // TODO : c'est un test à virer plus tard.
-        $this->data['html'] = ["basePath" => "/toto"];
+    public function hasConfig(string $section): bool
+    {
+        // TODO : fait plutot un array_key_exist()
+        return isset($this->sections[$section]);
     }
 
     /**
      * @inheritdoc
      */
-    public function exists(string $section): bool
+    // TODO : permettre de récupérer un subset de la config !!!! cad ajouter un paramétre $subset à null et si ce subset existe et q'uil est de type array on fait un new Config($subset_values)
+    public function getConfig(string $section): Config
     {
-        return isset($this->defaults[$section]) || isset($this->data[$section]) || $this->loader->has($section);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function setDefaults(string $section, array $data)
-    {
-        if (isset($this->defaults[$section])) {
-            throw new LogicException("Unable to set default config `{$section}` more than once.");
-        }
-        if (isset($this->data[$section])) {
-            throw new LogicException("Unable to set default config `{$section}`, config has been loaded.");
+        if (isset($this->sections[$section])) {
+            return $this->sections[$section];
         }
 
-        $this->defaults[$section] = $data;
+        // TODO : afficher le nom de la section et du subset recherché dans le message de l'exception. Ca sera plus simple pour débugger !!!
+        throw new ConfigException('Config not found in the manager !');
+
     }
 
-    /**
-     * @inheritdoc
-     */
-    // TODO : à virer !!!!
-    /*
-    public function modify(string $section, PatchInterface $patch): array
+    // TODO : code à améliorer !!!!
+    public function loadFromFile(string $file): void
     {
-        if (isset($this->instances[$section])) {
-            if ($this->strict) {
-                throw new ConfigDeliveredException(
-                    "Unable to patch config `{$section}`, config object has already been delivered."
-                );
+        if (! $this->filesystem->isFile($file)) {
+            // TODO : Lever plutot une InvalidConfigurationException
+            throw new ConfigException('Invalid file path');
+        }
+
+        foreach ($this->loaders as $loader) {
+            if ($loader->canLoad($file)) {
+                $this->config->merge($loader->load($file));
+
+                return;
             }
-            unset($this->instances[$section]);
         }
-        $data = $this->getConfig($section);
-        try {
-            return $this->data[$section] = $patch->patch($data);
-        } catch (PatchException $e) {
-            throw new PatchException("Unable to modify config `{$section}`.", $e->getCode(), $e);
+
+        throw new ConfigException(sprintf('Cannot load "%s"', $path));
+    }
+
+    // TODO : éventuellement lui passer un paramétre $section pour le nom et ensuite le contenu $data
+    public function loadFromArray(array $data): void
+    {
+        // TODO : à implémenter !!!!
+    }
+
+
+
+    public function loadFromDirectory(string $directory): void
+    {
+        if (! $this->filesystem->isDirectory($directory)) {
+            // TODO : Lever plutot une InvalidConfigurationException
+            throw new ConfigException('Invalid directory path');
         }
+
+        $directory = realpath($directory);
+        $files = $this->filesystem->files($directory);
+
+        foreach ($files as $file) {
+
+            // TODO : lui passer plutot un getBaseName en paramétre, voir même un getExtension() !!!!
+            $loader = $this->getLoaderFor($file->getRealPath());
+
+            if ($loader) {
+                $section = $this->generateSectionName($file, $directory);
+                $data = $loader->load($file->getRealPath());
+
+                $this->merge($section, $data);
+            }
+        }
+    }
+
+    // return the Loader found, else return null
+    private function getLoaderFor(string $filepath): ?LoaderInterface
+    {
+        foreach ($this->loaders as $loader) {
+            if ($loader->canLoad($filepath)) {
+                return $loader;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Gets a parser for a given file extension.
+     *
+     * @param  string $extension
+     *
+     * @return Noodlehaus\Parser\ParserInterface
+     *
+     * @throws UnsupportedFormatException If `$extension` is an unsupported file format
+     */
+    /*
+    protected function getParser($extension)
+    {
+        foreach ($this->supportedParsers as $parser) {
+            if (in_array($extension, $parser::getSupportedExtensions())) {
+                return new $parser();
+            }
+        }
+
+        // If none exist, then throw an exception
+        throw new UnsupportedFormatException('Unsupported configuration format');
     }*/
 
-    /**
-     * {@inheritdoc}
-     */
-    // TODO : améliorer la fonction "has()" et "get()" avec l'utilisation d'un cache (à vider dans la fonction merge) !!!! => https://github.com/hassankhan/config/blob/master/src/AbstractConfig.php#L114
-    public function has(string $name): bool
-    {
-        if ($name === '') {
-            return true;
-        }
-        $names = explode('.', $name);
-        $dataToReturn = $this->data;
-        while (count($names)) {
-            $name = array_shift($names);
-            if (! is_array($dataToReturn) || ! array_key_exists($name, $dataToReturn)) {
-                return false;
-            }
-            $dataToReturn = $dataToReturn[$name];
-        }
-
-        return true;
-    }
 
     /**
-     * {@inheritdoc}
-     */
-    // TODO : améliorer la fonction "get()" => https://github.com/pinepain/php-simple-config/blob/master/src/Config.php#L49
-    public function get(string $name, $default = null)
-    {
-        if ($name === '') {
-            return $this->data;
-        }
-        $names = explode('.', $name);
-        $dataToReturn = $this->data;
-        while (count($names)) {
-            $name = array_shift($names);
-            if (! is_array($dataToReturn) || ! array_key_exists($name, $dataToReturn)) {
-                return $default;
-            }
-            $dataToReturn = $dataToReturn[$name];
-        }
-
-        return $dataToReturn;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getConfig(string $section = null): array
-    {
-        // Read the cache first.
-        if (isset($this->data[$section])) {
-            return $this->data[$section];
-        }
-
-        if (isset($this->defaults[$section])) {
-            $data = [];
-            if ($this->loader->has($section)) {
-                $data = $this->loader->load($section);
-            }
-            $data = array_merge($this->defaults[$section], $data);
-        } else {
-            $data = $this->loader->load($section);
-        }
-
-        return $this->data[$section] = $data;
-    }
-
-
-    public function loadConfig(string $path): void
-    {
-        //$path = realpath(get_path('config'));
-        $path = realpath($path);
-
-        $files = $this->getConfigurationFiles($path);
-
-        if (! isset($files['app'])) {
-            throw new LogicException(sprintf('Unable to load the "app" configuration file in the "%s" folder.', $path));
-        }
-
-        //$config = $container->get('config');
-
-        foreach ($files as $key => $path) {
-            //$config->merge([$key => $this->requirePhpFile($path)]);
-            $this->merge([$key => require $path]);
-        }
-    }
-
-    function getConfigurationFiles(string $configPath): array
-    {
-        $files = [];
-        $configPath = realpath($configPath);
-
-        foreach ($this->getIterator($configPath) as $file) {
-            $directory = $this->getNestedDirectory($file, $configPath);
-            $files[$directory.basename($file->getRealPath(), '.php')] = $file->getRealPath();
-        }
-
-        ksort($files, SORT_NATURAL);
-
-        return $files;
-    }
-
-    /**
-     * Get the configuration file nesting path.
+     * Generate the section name (nesting path + file name using dot separator).
      *
      * @param  \SplFileInfo  $file
-     * @param  string  $configPath
+     * @param  string  $path
      * @return string
      */
-    function getNestedDirectory(\SplFileInfo $file, string $configPath): string
+    private function generateSectionName(\SplFileInfo $file, string $path): string
     {
         $directory = $file->getPath();
-        if ($nested = trim(str_replace($configPath, '', $directory), DIRECTORY_SEPARATOR)) {
+
+        if ($nested = trim(str_replace($path, '', $directory), DIRECTORY_SEPARATOR)) {
             $nested = str_replace(DIRECTORY_SEPARATOR, '.', $nested).'.';
         }
-        return $nested;
-    }
 
+        $key = $nested . $file->getBasename('.' . $file->getExtension());
 
-    function getIterator(string $configPath): \Iterator
-    {
-        $flags = \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::FOLLOW_SYMLINKS;
-        $depth = -1;
-
-        $directory = new \RecursiveDirectoryIterator($configPath, $flags);
-
-        $directory = new \RecursiveIteratorIterator($directory, \RecursiveIteratorIterator::SELF_FIRST);
-        $directory->setMaxDepth($depth);
-
-        $directory = new \CallbackFilterIterator($directory, function (\SplFileInfo $current) {
-            return $current->isFile();
-        });
-
-        $directory = new \CallbackFilterIterator($directory, function (\SplFileInfo $current) {
-            return $current->getExtension() === 'php';
-        });
-
-        //return iterator_to_array($directory);
-        return $directory;
+        return $key;
     }
 
     /**
      * @param array $appender
      */
-    public function merge(array $appender): void
+    // TODO : conserver cette méthode en public ??? éventuelleùment cela permettrait de charger la config depuis un array (ce qui viendrait compléter les possibilité de chargement en plus des méthodes loadFromDirectory et loadFromFile) éventuellement renommer cette méthode en loadFromArray($section, $data)
+    public function merge(string $section, array $data): void
     {
-        //$this->data = array_replace_recursive($this->data, $appender);
-        $this->data = $this->recursiveMerge($this->data, $appender);
+        // if the section is already present, we merge both the datas.
+        $result = $this->recursiveMerge($this->sections[$section] ?? [], $data);
+        $this->sections[$section] = new Config($result);
     }
 
     /**
@@ -234,6 +189,8 @@ class ConfigManager
      *
      * @return mixed
      */
+    //https://github.com/yiisoft/yii2-framework/blob/ecae73e23abb524bb637c37c62e4db5495f5f4f2/helpers/BaseArrayHelper.php#L117
+    //https://github.com/hiqdev/composer-config-plugin/blob/master/src/utils/Helper.php#L27
     private function recursiveMerge($origin, $appender)
     {
         if (is_array($origin)
@@ -253,4 +210,102 @@ class ConfigManager
 
         return $appender;
     }
+
+
+    /**
+     * {@inheritdoc}
+     */
+    /*
+    public function subset(string $name): ConfigInterface
+    {
+        $subset = $this->get($name);
+
+        if (! is_array($subset)) {
+            throw new \InvalidArgumentException('Subset must be an array.');
+        }
+
+        return new static($subset);
+    }*/
+
+    /**
+   * Merges multiple arrays, recursively, and returns the merged array.
+   *
+   * This function is equivalent to NestedArray::mergeDeep(), except the
+   * input arrays are passed as a single array parameter rather than a variable
+   * parameter list.
+   *
+   * The following are equivalent:
+   * - NestedArray::mergeDeep($a, $b);
+   * - NestedArray::mergeDeepArray(array($a, $b));
+   *
+   * The following are also equivalent:
+   * - call_user_func_array('NestedArray::mergeDeep', $arrays_to_merge);
+   * - NestedArray::mergeDeepArray($arrays_to_merge);
+   *
+   * @param array $arrays
+   *   An arrays of arrays to merge.
+   * @param bool $preserve_integer_keys
+   *   (optional) If given, integer keys will be preserved and merged instead of
+   *   appended. Defaults to FALSE.
+   *
+   * @return array
+   *   The merged array.
+   *
+   * @see NestedArray::mergeDeep()
+   */
+    // TODO : vérifier avec la fonction de drupal pour le deep merge. => https://api.drupal.org/api/drupal/includes%21bootstrap.inc/function/drupal_array_merge_deep/7.x
+  public static function mergeDeepArray(array $arrays, $preserve_integer_keys = FALSE) {
+    $result = [];
+    foreach ($arrays as $array) {
+      foreach ($array as $key => $value) {
+
+        // Renumber integer keys as array_merge_recursive() does unless
+        // $preserve_integer_keys is set to TRUE. Note that PHP automatically
+        // converts array keys that are integer strings (e.g., '1') to integers.
+        if (is_int($key) && !$preserve_integer_keys) {
+          $result[] = $value;
+        }
+        elseif (isset($result[$key]) && is_array($result[$key]) && is_array($value)) {
+          $result[$key] = self::mergeDeepArray([
+            $result[$key],
+            $value,
+          ], $preserve_integer_keys);
+        }
+        else {
+          $result[$key] = $value;
+        }
+      }
+    }
+    return $result;
+  }
+
+
+  function drupal_array_merge_deep_array($arrays) {
+      $result = array();
+      foreach ($arrays as $array) {
+        foreach ($array as $key => $value) {
+
+          // Renumber integer keys as array_merge_recursive() does. Note that PHP
+          // automatically converts array keys that are integer strings (e.g., '1')
+          // to integers.
+          if (is_integer($key)) {
+            $result[] = $value;
+          }
+          elseif (isset($result[$key]) && is_array($result[$key]) && is_array($value)) {
+            $result[$key] = drupal_array_merge_deep_array(array(
+              $result[$key],
+              $value,
+            ));
+          }
+          else {
+            $result[$key] = $value;
+          }
+        }
+      }
+      return $result;
+    }
+
+    //TODO : autre exemple : https://api.cakephp.org/3.3/class-Cake.Utility.Hash.html#_merge
+    //
+
 }
