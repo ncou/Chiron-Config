@@ -24,5 +24,5 @@ interface ConfigInterface extends \IteratorAggregate, \ArrayAccess
     /**
      * @return array
      */
-    public function toArray(): array;
+    public function getData(): array;
 }

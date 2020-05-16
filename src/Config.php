@@ -80,7 +80,7 @@ class Config implements ConfigInterface
     /**
      * @return array
      */
-    public function toArray(): array
+    public function getData(): array
     {
         return $this->data;
     }

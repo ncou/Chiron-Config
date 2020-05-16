@@ -17,10 +17,10 @@ use LogicException;
 //https://github.com/hassankhan/config/blob/master/src/AbstractConfig.php#L114
 //https://github.com/zendframework/zend-config/blob/master/src/Config.php
 
+// TODO : on devrait pas créer une classe ConfigFactory qui se charge de créer les objets Config ??? https://github.com/zendframework/zend-config/blob/master/src/Factory.php
 final class ConfigManager
 {
-    /** @var array */
-    // TODO : renommer cette variable en "$sections" et pas data !!!!
+    /** @var Config[] */
     private $sections = [];
     /** @var LoaderInterface[] */
     private $loaders = [];
@@ -37,36 +37,43 @@ final class ConfigManager
         $this->filesystem = new Filesystem();
     }
 
-    /**
-     * @param LoaderInterface $loader
-     */
-    public function addLoader(LoaderInterface $loader)
-    {
-        $this->loaders[] = $loader;
-    }
-
     public function hasConfig(string $section): bool
     {
-        // TODO : fait plutot un array_key_exist()
         return isset($this->sections[$section]);
     }
 
-    /**
-     * @inheritdoc
-     */
-    // TODO : permettre de récupérer un subset de la config !!!! cad ajouter un paramétre $subset à null et si ce subset existe et q'uil est de type array on fait un new Config($subset_values)
-    public function getConfig(string $section): Config
+    public function getConfig(string $section, ?string $subset = null): ConfigInterface
     {
-        if (isset($this->sections[$section])) {
-            return $this->sections[$section];
+        if (! $this->hasConfig($section)) {
+            // TODO : afficher le nom de la section recherchée dans le message de l'exception. Ca sera plus simple pour débugger !!!
+            throw new ConfigException('Config not found in the manager !');
         }
 
-        // TODO : afficher le nom de la section et du subset recherché dans le message de l'exception. Ca sera plus simple pour débugger !!!
-        throw new ConfigException('Config not found in the manager !');
+        $config = $this->sections[$section];
 
+        if ($subset !== null) {
+            $data = $config->get($subset);
+
+            if (! is_array($data)) {
+                // TODO : afficher le nom du subset recherché dans le message de l'exception. Ca sera plus simple pour débugger !!! Afficher le gettype() pour indiquer si c'est une chaine ou null par exemple.
+                throw new ConfigException('Subset must be an array !');
+            }
+
+            $config = new Config($data);
+        }
+
+        return $config;
+    }
+
+    public function getConfigData(string $section, ?string $subset = null): array
+    {
+        $config = $this->getConfig($section, $subset);
+
+        return $config->getData();
     }
 
     // TODO : code à améliorer !!!!
+    // TODO : il faudrait créer une méthode loadFromFiles qui lirait un tableau de fichiers (un objet Transversable par exemple)
     public function loadFromFile(string $file): void
     {
         if (! $this->filesystem->isFile($file)) {
@@ -90,8 +97,6 @@ final class ConfigManager
     {
         // TODO : à implémenter !!!!
     }
-
-
 
     public function loadFromDirectory(string $directory): void
     {
@@ -117,7 +122,7 @@ final class ConfigManager
         }
     }
 
-    // return the Loader found, else return null
+    // return the Loader found, if none found return null
     private function getLoaderFor(string $filepath): ?LoaderInterface
     {
         foreach ($this->loaders as $loader) {
@@ -128,7 +133,6 @@ final class ConfigManager
 
         return null;
     }
-
     /**
      * Gets a parser for a given file extension.
      *
@@ -162,24 +166,33 @@ final class ConfigManager
     private function generateSectionName(\SplFileInfo $file, string $path): string
     {
         $directory = $file->getPath();
+        $extension = '.' . $file->getExtension();
 
         if ($nested = trim(str_replace($path, '', $directory), DIRECTORY_SEPARATOR)) {
             $nested = str_replace(DIRECTORY_SEPARATOR, '.', $nested).'.';
         }
 
-        $key = $nested . $file->getBasename('.' . $file->getExtension());
+        return $nested . $file->getBasename($extension);
+    }
 
-        return $key;
+    /**
+     * @param LoaderInterface $loader
+     */
+    public function addLoader(LoaderInterface $loader): void
+    {
+        $this->loaders[] = $loader;
     }
 
     /**
      * @param array $appender
      */
     // TODO : conserver cette méthode en public ??? éventuelleùment cela permettrait de charger la config depuis un array (ce qui viendrait compléter les possibilité de chargement en plus des méthodes loadFromDirectory et loadFromFile) éventuellement renommer cette méthode en loadFromArray($section, $data)
-    public function merge(string $section, array $data): void
+    public function merge(string $section, array $appender): void
     {
         // if the section is already present, we merge both the datas.
-        $result = $this->recursiveMerge($this->sections[$section] ?? [], $data);
+        $origin = $this->hasConfig($section) ? $this->getConfigData($section) : [];
+        $result = $this->recursiveMerge($origin, $appender);
+        //$result = array_merge($origin, $appender);
         $this->sections[$section] = new Config($result);
     }
 
@@ -210,102 +223,5 @@ final class ConfigManager
 
         return $appender;
     }
-
-
-    /**
-     * {@inheritdoc}
-     */
-    /*
-    public function subset(string $name): ConfigInterface
-    {
-        $subset = $this->get($name);
-
-        if (! is_array($subset)) {
-            throw new \InvalidArgumentException('Subset must be an array.');
-        }
-
-        return new static($subset);
-    }*/
-
-    /**
-   * Merges multiple arrays, recursively, and returns the merged array.
-   *
-   * This function is equivalent to NestedArray::mergeDeep(), except the
-   * input arrays are passed as a single array parameter rather than a variable
-   * parameter list.
-   *
-   * The following are equivalent:
-   * - NestedArray::mergeDeep($a, $b);
-   * - NestedArray::mergeDeepArray(array($a, $b));
-   *
-   * The following are also equivalent:
-   * - call_user_func_array('NestedArray::mergeDeep', $arrays_to_merge);
-   * - NestedArray::mergeDeepArray($arrays_to_merge);
-   *
-   * @param array $arrays
-   *   An arrays of arrays to merge.
-   * @param bool $preserve_integer_keys
-   *   (optional) If given, integer keys will be preserved and merged instead of
-   *   appended. Defaults to FALSE.
-   *
-   * @return array
-   *   The merged array.
-   *
-   * @see NestedArray::mergeDeep()
-   */
-    // TODO : vérifier avec la fonction de drupal pour le deep merge. => https://api.drupal.org/api/drupal/includes%21bootstrap.inc/function/drupal_array_merge_deep/7.x
-  public static function mergeDeepArray(array $arrays, $preserve_integer_keys = FALSE) {
-    $result = [];
-    foreach ($arrays as $array) {
-      foreach ($array as $key => $value) {
-
-        // Renumber integer keys as array_merge_recursive() does unless
-        // $preserve_integer_keys is set to TRUE. Note that PHP automatically
-        // converts array keys that are integer strings (e.g., '1') to integers.
-        if (is_int($key) && !$preserve_integer_keys) {
-          $result[] = $value;
-        }
-        elseif (isset($result[$key]) && is_array($result[$key]) && is_array($value)) {
-          $result[$key] = self::mergeDeepArray([
-            $result[$key],
-            $value,
-          ], $preserve_integer_keys);
-        }
-        else {
-          $result[$key] = $value;
-        }
-      }
-    }
-    return $result;
-  }
-
-
-  function drupal_array_merge_deep_array($arrays) {
-      $result = array();
-      foreach ($arrays as $array) {
-        foreach ($array as $key => $value) {
-
-          // Renumber integer keys as array_merge_recursive() does. Note that PHP
-          // automatically converts array keys that are integer strings (e.g., '1')
-          // to integers.
-          if (is_integer($key)) {
-            $result[] = $value;
-          }
-          elseif (isset($result[$key]) && is_array($result[$key]) && is_array($value)) {
-            $result[$key] = drupal_array_merge_deep_array(array(
-              $result[$key],
-              $value,
-            ));
-          }
-          else {
-            $result[$key] = $value;
-          }
-        }
-      }
-      return $result;
-    }
-
-    //TODO : autre exemple : https://api.cakephp.org/3.3/class-Cake.Utility.Hash.html#_merge
-    //
 
 }
