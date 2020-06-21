@@ -21,14 +21,22 @@ class YmlLoader implements LoaderInterface
      */
     public function canLoad(string $path): bool
     {
+        // TODO : il faudrait pas ajouter une vérification si la classe YamlParser existe bien ? (c'est dans le cas ou l'utilisateur n'a pas installé le package Yaml de Symfony !!!)
         return file_exists($path) && preg_match($this->pattern, pathinfo($path)['basename']);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function load(string $path)
+    public function load(string $path): array
     {
-        return YamlParser::parseFile($path, YamlParser::PARSE_CONSTANT);
+        $data = YamlParser::parseFile($path, YamlParser::PARSE_CONSTANT);
+
+        // Check for array, if its anything else, throw an exception
+        if (! is_array($data)) {
+            throw new LoaderException(sprintf('Config file [%s] does not return an array', $path));
+        }
+
+        return $data;
     }
 }

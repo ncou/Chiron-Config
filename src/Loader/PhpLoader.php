@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 namespace Chiron\Config\Loader;
 
+use Chiron\Config\Exception\LoaderException;
+use Chiron\Config\Exception\UnsupportedFormatException;
+
 use Throwable;
+
+// TODO : utiliser le trait suivant qui vérifie qu'on ne charge pas un fichier de config en remontant dans l'arborescence via des "../"      https://github.com/cakephp/cakephp/blob/cafb1a25c07f4273f9e73d6aee46efbeeb6556bd/src/Core/Configure/FileConfigTrait.php#L44
 
 class PhpLoader implements LoaderInterface
 {
@@ -27,24 +32,16 @@ class PhpLoader implements LoaderInterface
     /**
      * {@inheritdoc}
      */
-    public function load(string $path)
+    public function load(string $path): array
     {
-        $level = ob_get_level();
-        ob_start();
+        $data = require $path;
 
-        try {
-            $config = require $path;
-            ob_end_flush();
-            if (is_array($config)) {
-                return $config;
-            }
-        } catch (Throwable $e) {
-            while (ob_get_level() - $level > 0) {
-                ob_end_flush();
-            }
+        // Check for array, if its anything else, throw an exception
+        if (! is_array($data)) {
+            throw new LoaderException(sprintf('Config file "%s" did not return an array', $path));
         }
 
-        return [];
+        return $data;
     }
 
 /*

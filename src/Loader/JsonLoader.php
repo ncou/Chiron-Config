@@ -28,8 +28,15 @@ class JsonLoader implements LoaderInterface
     /**
      * {@inheritdoc}
      */
-    public function load(string $path)
+    public function load(string $path): array
     {
-        return json_decode(file_get_contents($path), true);
+        $data = json_decode(file_get_contents($path), true);
+
+        // Check for array, if its anything else, throw an exception
+        if (! is_array($data)) {
+            throw new LoaderException(sprintf('Config file [%s] does not return an array', $path));
+        }
+
+        return $data;
     }
 }

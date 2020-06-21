@@ -27,7 +27,7 @@ class IniLoader implements LoaderInterface
     /**
      * {@inheritdoc}
      */
-    public function load(string $path)
+    public function load(string $path): array
     {
         $content = parse_ini_file($path, true);
         $array = null;
@@ -45,6 +45,11 @@ class IniLoader implements LoaderInterface
                     }
                 }
             }
+        }
+
+        // Check for array, if its anything else, throw an exception
+        if (! is_array($data)) {
+            throw new LoaderException(sprintf('Config file [%s] does not return an array', $path));
         }
 
         return $array;

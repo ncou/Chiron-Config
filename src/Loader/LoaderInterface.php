@@ -16,8 +16,7 @@ interface LoaderInterface
     /**
      * @param string $path
      *
-     * @return array|null
+     * @return array
      */
-    // TODO : forcer le retour en tant que array et lever une exception dans la méthode Load si on n'arrive pas à avoir un contenu de type tableau !!!!
-    public function load(string $path);
+    public function load(string $path): array;
 }
