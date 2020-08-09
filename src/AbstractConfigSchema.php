@@ -8,6 +8,7 @@ use Chiron\Config\Exception\ConfigException;
 use Closure;
 use Nette\Schema\Processor;
 use Nette\Schema\Schema;
+use Nette\Schema\Elements\Structure;
 
 abstract class AbstractConfigSchema extends Config implements ConfigSchemaInterface
 {
@@ -53,17 +54,19 @@ abstract class AbstractConfigSchema extends Config implements ConfigSchemaInterf
     protected function processSchema(array $configs): array
     {
         // Force the return value to be an array (by default the processed schema return an stdObject)
-        $schema = $this->getConfigSchema()->castTo('array');
+        $schema = $this->getConfigSchema();
+        // ensure all the structure added in the schema are casted as array and not as stdClass.
+        $this->castAllStructureToArray($schema);
+
         $processor = new Processor();
-
-        //$processor->skipDefaults();
-
         try {
             $result = $processor->processMultiple($schema, $configs);
         } catch (\Nette\Schema\ValidationException $e) {
             // TODO : faire une reflection de la méthode getConfigSchema pour afficher dans l'exception (en faisant un replace de $line et $file) l'endroit ou cela a planté ???
             throw new ConfigException(
-                sprintf('Schema validation inside %s::class failed [%s]', static::class, $e->getMessage())
+                sprintf('Schema validation inside %s::class failed [%s]', static::class, $e->getMessage()),
+                $e->getCode(),
+                $e
             );
         }
 
@@ -92,6 +95,22 @@ abstract class AbstractConfigSchema extends Config implements ConfigSchemaInterf
                     sprintf('Config key [%s] can\'t contains a dot (".") character.', $key)
                 );
 
+            }
+        }
+    }
+
+    protected function castAllStructureToArray(Schema $schema): void
+    {
+        if ($schema instanceof Structure) {
+            // cast the object
+            $schema->castTo('array');
+            // look in the other items if there is another structure
+            $prop = new \ReflectionProperty(Structure::class, 'items');
+            // the items is a private property, change the visibility to read it.
+            $prop->setAccessible(true);
+
+            foreach ($prop->getValue($schema) as $item) {
+                $this->castAllStructureToArray($item);
             }
         }
     }
