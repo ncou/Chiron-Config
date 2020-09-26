@@ -6,7 +6,7 @@ namespace Chiron\Tests\Config;
 
 use Chiron\Container\Container;
 use Chiron\Logger\LoggerManager;
-use Chiron\Boot\Directories;
+use Chiron\Core\Directories;
 use InvalidArgumentException;
 use Chiron\Config\Exception\ConfigException;
 use Nette\Schema\Schema;
