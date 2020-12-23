@@ -22,10 +22,10 @@ use Chiron\Config\Exception\ConfigException;
 abstract class AbstractInjectableConfig extends AbstractConfigSchema implements InjectableConfigInterface
 {
     /** @var string */
-    protected const CONFIG_SECTION_NAME = null;
+    protected const CONFIG_SECTION_NAME = null; // TODO : renommer en SECTION_NAME
 
     /** @var string */
-    protected const SECTION_SUBSET_NAME = null;
+    protected const SECTION_SUBSET_NAME = null; // TODO : renommer en SUBSET_NAME
 
     public function getConfigSectionName(): string
     {
@@ -33,7 +33,7 @@ abstract class AbstractInjectableConfig extends AbstractConfigSchema implements 
         if (! is_string(static::CONFIG_SECTION_NAME)) {
             // TODO : lever une ApplicationException et non pas une ConfigException !!!! ou alors créer une nouvelle exception du style MissingSectionException qui étendra de la classe ConfigException !!!! (classe à mettre dans le package "core")
             throw new ConfigException(
-                sprintf('The config section name should be defined (const %s::CONFIG_SECTION is null)', static::class)
+                sprintf('The config section name should be defined (const %s::CONFIG_SECTION_NAME is null)', static::class)
             );
         }
         // handle the case when the user use a directory separator (windows ou linux value) in the linked file path. And remove the starting/ending char '.' if found.

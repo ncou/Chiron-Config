@@ -10,6 +10,8 @@ use Chiron\Config\Loader\JsonLoader;
 use Chiron\Config\Loader\YmlLoader;
 use Chiron\Config\Loader\LoaderInterface;
 
+// TODO : utiliser un bout de code comme cakephp : App::className($name, 'I18n\Parser', 'FileParser'); avec $name = ucfirst($extension); comma ca recherche automatiquement la classe Cake\I18n\Parser\PoFileParser
+
 // TODO : Classe à renommer en ConfigReader ???? ou ConfigParser ????
 class ConfigLoader
 {

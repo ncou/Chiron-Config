@@ -10,6 +10,9 @@ use Nette\Schema\Processor;
 use Nette\Schema\Schema;
 use Nette\Schema\Elements\Structure;
 
+// TODO : ajouter une méthode magique __getXXXX() qui se charge de retrouver la clés XXXX dans les propriétés ca permet de retrouver directement une propriété.
+// Exemple :   $this->getCookieName() va appeller la méthode magique __call(), get qui va récupérer la fin de la méthode pour vérifier si la clés existe. On récupérer "CookieName" on applique un snake_case dessus pour avoir la clés. Donc on vérifiée via un Schema->has('cookie_name') ou Config->has('cookie_name') que cette clés existe et à ce moment là on renvoit la valeur. Ca rend plus générique les getteurs et setteurs !!!
+
 abstract class AbstractConfigSchema extends Config implements ConfigSchemaInterface
 {
     /**
@@ -42,6 +45,7 @@ abstract class AbstractConfigSchema extends Config implements ConfigSchemaInterf
         $this->cache = [];
     }
 
+    // TODO : renommer la méthode en defineSchema(): Structure    https://github.com/redbitcz/subreg-api-php/blob/60f377ac68f3c1871b926eca336f5eb8d3368455/src/Schema/SchemaObject.php#L20
     abstract protected function getConfigSchema(): Schema;
 
     /**
@@ -55,8 +59,11 @@ abstract class AbstractConfigSchema extends Config implements ConfigSchemaInterf
     {
         // Force the return value to be an array (by default the processed schema return an stdObject)
         $schema = $this->getConfigSchema();
-        // ensure all the structure added in the schema are casted as array and not as stdClass.
-        $this->castAllStructureToArray($schema);
+
+        // ensure all the structure added in the schema are :
+        // - casted as output array and not as stdClass.
+        // - doesn't contains invalid characters (ex: the '.' char car disturb the nested get function).
+        $this->prepareStructure($schema);
 
         $processor = new Processor();
         try {
@@ -71,7 +78,8 @@ abstract class AbstractConfigSchema extends Config implements ConfigSchemaInterf
         }
 
         // ensure there is no dot character in the key to not disturb the ->get('xxx.yyy') funtion
-        $this->assertNoCharacterDotInKeys($result);
+        // TODO : virer ce bout de code !!!
+        //$this->assertNoCharacterDotInKeys($result); // TODO : controle à déplacer dans la méthode castAllStructure et utiliser la variable $key pour avoir le nom !!!!
 
         return $result;
     }
@@ -80,6 +88,7 @@ abstract class AbstractConfigSchema extends Config implements ConfigSchemaInterf
      * The config get() function use the dot as separator to recursively grab the array data.
      * A dot character in the original config key could disturb this function, so we forbid this character.
      */
+    /*
     protected function assertNoCharacterDotInKeys(array $config): void
     {
         $iterator  = new \RecursiveArrayIterator($config);
@@ -90,6 +99,7 @@ abstract class AbstractConfigSchema extends Config implements ConfigSchemaInterf
 
         foreach ($recursive as $key => $value) {
             // does the key contain a dot character ?
+            // TODO il faudrait plutot faire un truc du genre : if (! preg_match('/^[a-z0-9_]+$/', $key)) throw Exception     ca permettrait de limiter les clés dans les fichiers de config à des caractéres us-ascii en minuscule et avec uniquement le séparateur "_" permis. ca permettrait d'avoir un truc propre en terme de nommage des clés !!!!
             if (is_string($key) && strpos($key, '.') !== false) {
                 throw new \UnexpectedValueException(
                     sprintf('Config key [%s] can\'t contains a dot (".") character.', $key)
@@ -97,20 +107,32 @@ abstract class AbstractConfigSchema extends Config implements ConfigSchemaInterf
 
             }
         }
-    }
+    }*/
 
-    protected function castAllStructureToArray(Schema $schema): void
+    /*
+     * Force the cast on all the structure objects.
+     * Enforce the expected key format for the structures.
+     */
+    protected function prepareStructure(Schema $schema): void
     {
         if ($schema instanceof Structure) {
             // cast the object
             $schema->castTo('array');
+
             // look in the other items if there is another structure
             $prop = new \ReflectionProperty(Structure::class, 'items');
             // the items is a private property, change the visibility to read it.
             $prop->setAccessible(true);
 
-            foreach ($prop->getValue($schema) as $item) {
-                $this->castAllStructureToArray($item);
+            foreach ($prop->getValue($schema) as $key => $item) {
+                // enforce the keys format: alphanumeric, lowercase and underscore as separator.
+                if (! preg_match('/^[a-z0-9_]+$/', $key)) {
+                    throw new \UnexpectedValueException(
+                        sprintf('Config key [%s::%s] contains invalid characters.', static::class, $key)
+                    );
+                }
+
+                $this->prepareStructure($item);
             }
         }
     }
