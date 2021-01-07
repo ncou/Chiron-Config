@@ -60,6 +60,8 @@ abstract class AbstractConfigSchema extends Config implements ConfigSchemaInterf
         // Force the return value to be an array (by default the processed schema return an stdObject)
         $schema = $this->getConfigSchema();
 
+
+
         // ensure all the structure added in the schema are :
         // - casted as output array and not as stdClass.
         // - doesn't contains invalid characters (ex: the '.' char car disturb the nested get function).
