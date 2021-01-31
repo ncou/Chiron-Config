@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Chiron\Tests\Config;
 
 use Chiron\Container\Container;
-use Chiron\Logger\LoggerManager;
 use Chiron\Core\Directories;
 use InvalidArgumentException;
 use Chiron\Config\Exception\ConfigException;
