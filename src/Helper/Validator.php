@@ -6,6 +6,8 @@ namespace Chiron\Config\Helper;
 
 use Nette\Utils\Validators as NetteValidator;
 
+// TODO : utiliser le package : https://github.com/webmozarts/assert/blob/master/src/Assert.php     avec les méthodes isMap() et isList() ou ip() par exemple !!!! il faut faire une classe mére qui étend de la classe Assert::class et redéfinir la méthode reportInvalidArgument() pour retourner un booléen 'false' au lieu de lever une exception !!!!
+
 // TODO : améliorer le extend du nette validator pour ajouter des méthodes protected pour ajouter le charset/timezone/locale à la méthode 'is()' présente dans nette\validators
 final class Validator extends NetteValidator
 {

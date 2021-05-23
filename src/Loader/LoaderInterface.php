@@ -4,19 +4,25 @@ declare(strict_types=1);
 
 namespace Chiron\Config\Loader;
 
+use Chiron\Config\Exception\LoaderException;
+
 interface LoaderInterface
 {
     /**
-     * @param string $path
+     * Return true if config section exists.
      *
+     * @param string $section
      * @return bool
      */
-    public function canLoad(string $path): bool;
+    public function has(string $section): bool;
 
     /**
-     * @param string $path
+     * Load a config section data array.
      *
+     * @param string $section
      * @return array
+     *
+     * @throws LoaderException
      */
-    public function load(string $path): array;
+    public function load(string $section): array;
 }

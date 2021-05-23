@@ -80,6 +80,7 @@ class Config implements ConfigInterface
     /**
      * @return array
      */
+    // TODO : renommer la méthode en all() ou data() !!!!
     public function getData(): array
     {
         return $this->data;
