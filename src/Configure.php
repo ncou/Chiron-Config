@@ -9,7 +9,6 @@ use Chiron\Config\ConfigInterface;
 use Chiron\Config\ConfigLoader;
 use Chiron\Config\Exception\ConfigException;
 use Chiron\Container\SingletonInterface;
-use Chiron\Filesystem\Filesystem;
 use SplFileInfo;
 use Chiron\Config\Loader\LoaderInterface;
 use Chiron\Config\Loader\PhpLoader;
