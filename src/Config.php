@@ -7,6 +7,10 @@ namespace Chiron\Config;
 use Chiron\Config\Exception\ConfigException;
 use ArrayIterator;
 
+// TODO : utiliser le package "dflydev/dot-access-data" pour gérer les structures avec un point ????
+
+// TODO : renommer la méthode has() en exists()
+// TODO : virer les méthode offsetGet/Set/Exists...etc idem pour la méthode getIterator à virer (penser à modifier l'interface ConfigInterface::class) !!!!
 class Config implements ConfigInterface
 {
     /**

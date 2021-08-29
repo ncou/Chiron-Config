@@ -13,6 +13,8 @@ use Nette\Schema\Elements\Structure;
 // TODO : ajouter une méthode magique __getXXXX() qui se charge de retrouver la clés XXXX dans les propriétés ca permet de retrouver directement une propriété.
 // Exemple :   $this->getCookieName() va appeller la méthode magique __call(), get qui va récupérer la fin de la méthode pour vérifier si la clés existe. On récupérer "CookieName" on applique un snake_case dessus pour avoir la clés. Donc on vérifiée via un Schema->has('cookie_name') ou Config->has('cookie_name') que cette clés existe et à ce moment là on renvoit la valeur. Ca rend plus générique les getteurs et setteurs !!!
 
+// https://github.com/thephpleague/config/blob/main/src/Configuration.php
+
 abstract class AbstractConfigSchema extends Config implements ConfigSchemaInterface
 {
     /**
