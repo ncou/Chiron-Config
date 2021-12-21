@@ -93,7 +93,7 @@ class Config implements ConfigInterface
     /**
      * {@inheritdoc}
      */
-    public function offsetExists($offset)
+    public function offsetExists($offset): bool
     {
         return $this->has($offset);
     }
@@ -101,7 +101,7 @@ class Config implements ConfigInterface
     /**
      * {@inheritdoc}
      */
-    public function offsetGet($offset)
+    public function offsetGet($offset): mixed
     {
         return $this->get($offset);
     }
@@ -109,7 +109,7 @@ class Config implements ConfigInterface
     /**
      * {@inheritdoc}
      */
-    public function offsetSet($offset, $value)
+    public function offsetSet($offset, $value): void
     {
         throw new ConfigException(
             'Unable to change configuration data, configs are treated as immutable by default'
@@ -119,7 +119,7 @@ class Config implements ConfigInterface
     /**
      * {@inheritdoc}
      */
-    public function offsetUnset($offset)
+    public function offsetUnset($offset): void
     {
         throw new ConfigException(
             'Unable to change configuration data, configs are treated as immutable by default'
