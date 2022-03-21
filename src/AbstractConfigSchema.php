@@ -130,11 +130,15 @@ abstract class AbstractConfigSchema extends Config implements ConfigSchemaInterf
 
             foreach ($prop->getValue($schema) as $key => $item) {
                 // enforce the keys format: alphanumeric, lowercase and underscore as separator.
+                // TODO : lever un message d'erreur spécifique si on a utilisé du uppercase car c'est pas simple d'identifier le caractére qui pose probléme.
                 if (! preg_match('/^[a-z0-9_]+$/', $key)) {
                     throw new \UnexpectedValueException(
                         sprintf('Config key [%s::%s] contains invalid characters.', static::class, $key)
                     );
                 }
+
+                // TODO : virer ce mergeDefaults(false) lorsque nette/schema sortira une release au dessus de la v1.2.2 car le mergeDefault sera par défaut mis à false!!!
+                $item->mergeDefaults(false);
 
                 $this->prepareStructure($item);
             }

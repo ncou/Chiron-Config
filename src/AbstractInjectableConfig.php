@@ -6,6 +6,8 @@ namespace Chiron\Config;
 
 use Chiron\Config\Exception\ConfigException;
 
+// TODO : déplacer cette classe dans le package chiron/core ????
+
 //https://github.com/jenssegers/lean/blob/master/src/Slim/Settings.php
 
 /**
