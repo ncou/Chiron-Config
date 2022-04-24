@@ -10,6 +10,8 @@ use Throwable;
 
 // TODO : utiliser le trait suivant qui vérifie qu'on ne charge pas un fichier de config en remontant dans l'arborescence via des "../"      https://github.com/cakephp/cakephp/blob/cafb1a25c07f4273f9e73d6aee46efbeeb6556bd/src/Core/Configure/FileConfigTrait.php#L44
 
+//https://github.com/spiral/config/blob/master/src/Loader/PhpLoader.php
+
 final class PhpLoader implements LoaderInterface
 {
     /** @var string */
@@ -45,7 +47,7 @@ final class PhpLoader implements LoaderInterface
     {
         $filepath = $this->getFilePath($section, true);
 
-        $data = include $filepath;
+        $data = include $filepath; // TODO : faire un require et surtout un try/catch Throwable pour transformer l'exception en LoaderException !!! https://github.com/spiral/config/blob/master/src/Loader/PhpLoader.php#L38
 
         // Check for array, if its anything else, throw an exception
         if (! is_array($data)) {
@@ -65,7 +67,7 @@ final class PhpLoader implements LoaderInterface
      *
      * @throws LoaderException When files don't exist or when files contain '..' as this could lead to abusive reads.
      */
-    // TODO : mettre ce bout de code dans un trait car il pourra servir pour les différentes classes de Loader (pour lide du json, du ini ou du yaml).
+    // TODO : mettre ce bout de code dans un trait car il pourra servir pour les différentes classes de Loader (pour lire du json, du ini ou du yaml).
     private function getFilePath(string $name, bool $checkExists = false): string
     {
         if (strpos($name, '..') !== false) {
@@ -83,7 +85,7 @@ final class PhpLoader implements LoaderInterface
             return $realPath;
         }
 
-        throw new LoaderException(sprintf('Could not load configuration file: %s', $file));
+        throw new LoaderException(sprintf('Could not load configuration file: %s', $file)); // TODO : changer le message en 'Unable to load config "$name".'
 
     }
 }

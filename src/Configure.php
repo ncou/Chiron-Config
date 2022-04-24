@@ -21,6 +21,8 @@ use Chiron\Config\Loader\PhpLoader;
 
 //https://github.com/limingxinleo/x-phalcon-config-center/blob/master/src/Config/Center/Client.php
 
+//https://github.com/spiral/config/blob/master/src/ConfigManager.php
+
 // TODO : on devrait pas créer une classe ConfigFactory qui se charge de créer les objets Config ??? https://github.com/zendframework/zend-config/blob/master/src/Factory.php
 // TODO : renommer la classe en Configure::class et laisser les méthode load() qui chargera aussi bien un fichier qu'un répertoire. + has() et get() & getConfig() pour avoir un retour d'objet mais aussi de tableau data et la méthode add() qui permet de charger les données d'une config depuis un array.
 // TODO : renommer en "Configure::class" + faire un helper dans les fonction de type config_item($item, $section) ou config($section)
@@ -35,6 +37,7 @@ final class Configure //implements SingletonInterface
     private $data = [];
 
 
+    // TODO : ajouter une méthode pour récupérer le Loader ??? par exemple si on veux modifier le path du Loader ou au contraire ajouter un path supplémentaire si on gérer les paths sous forme de tableau, ca permettra de chercher un fichier de config dans plusieurs répertoires !!!!   => public function getLoader(): LoaderInterface
     public function __construct(LoaderInterface $loader)
     {
         $this->loader = $loader;
@@ -61,6 +64,7 @@ final class Configure //implements SingletonInterface
      * @throws LoaderException
      */
     // TODO : gérer le cas ou la config n'existe pas, il faudrai que cette méthode leve une exception !!!!
+    // TODO : gérer le cas ou on passe une chaine vide ('') en paramétre !!!!
     // TODO : *********************  il faut gérer le subset comme paramétre dans cette méthode !!!!! *******************
     public function read(string $section): array
     {

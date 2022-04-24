@@ -138,7 +138,9 @@ abstract class AbstractConfigSchema extends Config implements ConfigSchemaInterf
                 }
 
                 // TODO : virer ce mergeDefaults(false) lorsque nette/schema sortira une release au dessus de la v1.2.2 car le mergeDefault sera par défaut mis à false!!!
-                $item->mergeDefaults(false);
+                if (method_exists($item, 'mergeDefaults')) {
+                    $item->mergeDefaults(false);
+                }
 
                 $this->prepareStructure($item);
             }
